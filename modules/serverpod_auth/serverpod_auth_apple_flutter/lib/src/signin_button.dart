@@ -5,10 +5,17 @@ import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart
 
 import 'auth.dart';
 
-/// Sign in with Apple button. When pressed, attempts to sign in with Google.
+/// Sign in with Apple button. When pressed, attempts to sign in with Apple.
 class SignInWithAppleButton extends StatefulWidget {
   /// The Auth module's caller.
   final Caller caller;
+
+  /// Apple clientId, required for non-Apple platforms.
+  final String? clientId;
+
+  /// Redirect Uri as setup in Apple Developer portal.
+  /// Required for non-Apple platforms.
+  final Uri? redirectUri;
 
   /// Called if sign in is successful.
   final VoidCallback? onSignedIn;
@@ -19,12 +26,14 @@ class SignInWithAppleButton extends StatefulWidget {
   /// The style of the button.
   final ButtonStyle? style;
 
-  /// Creates a new Sign in with Google button.
+  /// Creates a new Sign in with Apple button.
   const SignInWithAppleButton({
     required this.caller,
     this.onSignedIn,
     this.onFailure,
     this.style,
+    this.clientId,
+    this.redirectUri,
   });
 
   @override
@@ -51,6 +60,8 @@ class SignInWithAppleButtonState extends State<SignInWithAppleButton> {
         // Attempt to sign in the user.
         signInWithApple(
           widget.caller,
+          clientId: widget.clientId,
+          redirectUri: widget.redirectUri,
         ).then((UserInfo? userInfo) {
           // Pop the loading barrier
           Navigator.of(context).pop();

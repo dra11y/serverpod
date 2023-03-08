@@ -5,11 +5,21 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Attempts to Sign in with Apple. If successful, a [UserInfo] is returned.
 /// If the attempt is not a success, null is returned.
-Future<UserInfo?> signInWithApple(Caller caller) async {
+Future<UserInfo?> signInWithApple(
+  Caller caller, {
+  String? clientId,
+  Uri? redirectUri,
+}) async {
   // Check that Sign in with Apple is available on this platform.
   try {
     var available = await SignInWithApple.isAvailable();
     if (!available) return null;
+
+    WebAuthenticationOptions? webAuthenticationOptions;
+    if (clientId != null && redirectUri != null) {
+      webAuthenticationOptions = WebAuthenticationOptions(
+          clientId: clientId, redirectUri: redirectUri);
+    }
 
     // Attempt to sign in.
     var credential = await SignInWithApple.getAppleIDCredential(
@@ -17,6 +27,7 @@ Future<UserInfo?> signInWithApple(Caller caller) async {
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName,
       ],
+      webAuthenticationOptions: webAuthenticationOptions,
     );
 
     var userIdentifier = credential.userIdentifier!;
