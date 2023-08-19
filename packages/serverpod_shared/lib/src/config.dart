@@ -36,19 +36,37 @@ class ServerpodConfig {
 
   /// Loads and parses a server configuration file. Picks config file depending
   /// on run mode.
-  ServerpodConfig(this.runMode, this.serverId, Map<String, String> passwords)
-      : file = 'config/$runMode.yaml' {
+  ServerpodConfig(
+    this.runMode,
+    this.serverId,
+    Map<String, String> passwords, {
+    ServerConfig? apiServer,
+    ServerConfig? insightsServer,
+    ServerConfig? webServer,
+    DatabaseConfig? database,
+    RedisConfig? redis,
+  }) : file = 'config/$runMode.yaml' {
     var data = File(file).readAsStringSync();
     var doc = loadYaml(data);
 
-    assert(doc['apiServer'] is Map, 'apiServer is missing in confing');
-    apiServer = ServerConfig._(doc['apiServer'], 'api');
+    assert(apiServer != null || doc['apiServer'] is Map,
+        'apiServer is missing in config');
+    this.apiServer = apiServer ?? ServerConfig._(doc['apiServer'], 'api');
+    assert(this.apiServer._name == 'api',
+        'apiServer should be created with ServerConfig.api()');
 
-    assert(doc['insightsServer'] is Map, 'insightsServer is missing in config');
-    insightsServer = ServerConfig._(doc['insightsServer'], 'insights');
+    assert(insightsServer != null || doc['insightsServer'] is Map,
+        'insightsServer is missing in config');
+    this.insightsServer =
+        insightsServer ?? ServerConfig._(doc['insightsServer'], 'insights');
+    assert(this.apiServer._name == 'insights',
+        'insightsServer should be created with ServerConfig.insights()');
 
-    assert(doc['webServer'] is Map, 'webServer is missing in config');
-    webServer = ServerConfig._(doc['webServer'], 'web');
+    assert(webServer != null || doc['webServer'] is Map,
+        'webServer is missing in config');
+    this.webServer = ServerConfig._(doc['webServer'], 'web');
+    assert(this.apiServer._name == 'web',
+        'webServer should be created with ServerConfig.web()');
 
     // Get max request size (default to 512kb)
     maxRequestSize = doc['maxRequestSize'] ?? 524288;
@@ -56,14 +74,13 @@ class ServerpodConfig {
     serviceSecret = passwords['serviceSecret'] ?? '';
 
     // Get database setup
-    assert(doc['database'] is Map, 'Database setup is missing in config');
-    Map dbSetup = doc['database'];
-    database = DatabaseConfig._(dbSetup, passwords);
+    assert(database != null || doc['database'] is Map,
+        'Database setup is missing in config');
+    this.database = database ?? DatabaseConfig._(doc['database'], passwords);
 
     // Get Redis setup
     assert(doc['redis'] is Map, 'Redis setup is missing in config');
-    Map redisSetup = doc['redis'];
-    redis = RedisConfig._(redisSetup, passwords);
+    this.redis = redis ?? RedisConfig._(doc['redis'], passwords);
   }
 
   @override
@@ -96,6 +113,27 @@ class ServerConfig {
 
   /// Public facing scheme, i.e. http or https.
   late final String publicScheme;
+
+  ServerConfig.insights({
+    required this.port,
+    required this.publicHost,
+    required this.publicPort,
+    required this.publicScheme,
+  }) : _name = 'insights';
+
+  ServerConfig.api({
+    required this.port,
+    required this.publicHost,
+    required this.publicPort,
+    required this.publicScheme,
+  }) : _name = 'api';
+
+  ServerConfig.web({
+    required this.port,
+    required this.publicHost,
+    required this.publicPort,
+    required this.publicScheme,
+  }) : _name = 'web';
 
   ServerConfig._(Map serverSetup, this._name) {
     port = serverSetup['port'];
@@ -139,6 +177,16 @@ class DatabaseConfig {
   /// True if the database is running on a unix socket.
   late final bool isUnixSocket;
 
+  DatabaseConfig({
+    required this.host,
+    required this.port,
+    required this.name,
+    required this.user,
+    required this.password,
+    this.requireSsl = false,
+    this.isUnixSocket = false,
+  });
+
   DatabaseConfig._(Map dbSetup, Map<String, String> passwords) {
     host = dbSetup['host']!;
     port = dbSetup['port']!;
@@ -180,6 +228,14 @@ class RedisConfig {
 
   /// Redis password (optional, but recommended).
   late final String? password;
+
+  RedisConfig({
+    this.enabled = false,
+    required this.host,
+    required this.port,
+    this.user,
+    this.password,
+  });
 
   RedisConfig._(Map redisSetup, Map<String, String> passwords) {
     enabled = redisSetup['enabled'] ?? false;

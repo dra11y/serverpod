@@ -1,0 +1,3 @@
+[submodule "integrations/serverpod_cloud_storage_do"]
+	path = integrations/serverpod_cloud_storage_do
+	url = git@github.com:dra11y/serverpod_cloud_storage_do.git

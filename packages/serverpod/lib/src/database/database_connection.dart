@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:retry/retry.dart';
 import 'package:postgres_pool/postgres_pool.dart';
+import 'package:retry/retry.dart';
 import 'package:serverpod_serialization/serverpod_serialization.dart';
 
 import '../generated/protocol.dart';
@@ -666,6 +666,7 @@ Current type was $T''');
       slow: slow,
       failed: exception != null,
     );
+    shouldLog = true;
 
     if (!shouldLog) {
       return;

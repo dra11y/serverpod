@@ -10,7 +10,6 @@ import 'package:serverpod/src/server/cluster_manager.dart';
 import 'package:serverpod/src/server/future_call_manager.dart';
 import 'package:serverpod/src/server/health_check_manager.dart';
 import 'package:serverpod/src/server/log_manager.dart';
-import 'package:serverpod/src/server/command_line_args.dart';
 import 'package:serverpod_shared/serverpod_shared.dart';
 
 import '../authentication/default_authentication_handler.dart';
@@ -211,6 +210,25 @@ class Serverpod {
     this.endpoints, {
     this.authenticationHandler,
     this.healthCheckHandler,
+
+    /// Pass in a custom [PasswordManager] to override the default YAML loader.
+    PasswordManager? passwordManager,
+
+    /// Pass in a custom [DatabaseConfig] for the database,
+    /// e.g. when loading database config from the environment instead of YAML.
+    DatabaseConfig? database,
+
+    /// Pass in a custom [ServerConfig.api] for the API server.
+    ServerConfig? apiServer,
+
+    /// Pass in a custom [ServerConfig.insights] for the insights server.
+    ServerConfig? insightsServer,
+
+    /// Pass in a custom [ServerConfig.web] for the web server.
+    ServerConfig? webServer,
+
+    /// Pass in a custom [RedisConfig] for redis.
+    RedisConfig? redis,
   }) {
     _internalSerializationManager = internal.Protocol();
 
@@ -224,7 +242,9 @@ class Serverpod {
     serverId = commandLineArgs.serverId;
 
     // Load passwords
-    _passwords = PasswordManager(runMode: runMode).loadPasswords() ?? {};
+    _passwords = (passwordManager ?? DefaultPasswordManager(runMode: runMode))
+            .loadPasswords() ??
+        {};
 
     if (_passwords.isEmpty) {
       stderr.writeln('Failed to load passwords. Serverpod cannot not start.');
@@ -232,7 +252,16 @@ class Serverpod {
     }
 
     // Load config
-    config = ServerpodConfig(_runMode, serverId, _passwords);
+    config = ServerpodConfig(
+      _runMode,
+      serverId,
+      _passwords,
+      apiServer: apiServer,
+      insightsServer: insightsServer,
+      webServer: webServer,
+      database: database,
+      redis: redis,
+    );
 
     // Setup database
     databaseConfig = DatabasePoolManager(
@@ -284,7 +313,7 @@ class Serverpod {
     );
 
     // Create web server.
-    webServer = WebServer(serverpod: this);
+    this.webServer = WebServer(serverpod: this);
 
     // Print version and runtime arguments.
     stdout.writeln(
