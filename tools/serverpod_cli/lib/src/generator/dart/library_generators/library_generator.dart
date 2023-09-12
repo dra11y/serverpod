@@ -586,10 +586,7 @@ class LibraryGenerator {
                     Parameter((p) => p
                       ..name = 'context'
                       ..named = true
-                      ..type = TypeReference((t) => t
-                        ..symbol = 'SecurityContext'
-                        ..url = 'dart:io'
-                        ..isNullable = true)),
+                      ..type = TypeReference((t) => t..symbol = 'dynamic')),
                     Parameter((p) => p
                       ..name = 'authenticationKeyManager'
                       ..named = true

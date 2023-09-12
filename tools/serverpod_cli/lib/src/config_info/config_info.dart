@@ -5,7 +5,8 @@ class ConfigInfo {
   String? serverId;
   late ServerpodConfig config;
   ConfigInfo(String runMode, {this.serverId}) {
-    var passwords = PasswordManager(runMode: runMode).loadPasswords() ?? {};
+    var passwords =
+        DefaultPasswordManager(runMode: runMode).loadPasswords() ?? {};
     config = ServerpodConfig(runMode, serverId ?? 'undefined', passwords);
   }
 
